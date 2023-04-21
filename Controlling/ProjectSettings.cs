@@ -1,9 +1,12 @@
-﻿using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Sockets;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,8 +36,64 @@ namespace Controlling
         {
             return $"Project {{ Name = {Name}, JiraKey = {JiraKey}, DaysPerStoryPoint = {DaysPerStoryPoint}, FilePrefix = {FilePrefix} }}";
         }
-
     }
+    public class Leftover
+    {
+        // columns: original ticket	follow-up tickets (comma-separated)
+        public string OriginalTicketKey { get; set; }
+        public IEnumerable<string> FollowUpTicketKeys { get; set; }
+    }
+    class ExcelFile : IDisposable {
+        private bool disposedValue;
+        private SpreadsheetDocument document;
+        private WorkbookPart workbookPart;
+        private Worksheet worksheet;
+        private Sheets sheets;
+        private Sheet sheet;
+
+        public SharedStringTable SharedStringTable { get; private set; }
+
+        public IEnumerable<Row> Rows { get { return worksheet.Descendants<Row>(); } }
+        public ExcelFile(string filePath)
+        {
+            document = SpreadsheetDocument.Open(filePath, false);
+            workbookPart = document.WorkbookPart;
+            sheets = workbookPart.Workbook.GetFirstChild<Sheets>();
+        }
+
+        public void LoadSheet(string sheetName)
+        {
+            Sheet sheet = sheets.Elements<Sheet>().FirstOrDefault(s => s.Name == sheetName);
+            if (sheet == null)
+            {
+                throw new ArgumentException($"Sheet '{sheetName}' not found.");
+            }
+            worksheet = ((WorksheetPart)workbookPart.GetPartById(sheet.Id)).Worksheet;
+            var sstPart = workbookPart.GetPartsOfType<SharedStringTablePart>().First();
+            SharedStringTable = sstPart.SharedStringTable;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing && document != null)
+                {
+                    document.Dispose();
+                }
+
+                document = null;
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
+
     public class ProjectSettings
     {
         // contracts:  abacus id	project	name	startdate	enddate	Budget CHF	Budget days	Notes
@@ -42,40 +101,28 @@ namespace Controlling
 
         public IEnumerable<Contract> Contracts { get; private set; }
         public IEnumerable<Project> Projects { get; private set; }
+        public List<Leftover> Leftovers { get; private set; }
 
 
         public ProjectSettings(string filePath)
         {
-            using SpreadsheetDocument doc = SpreadsheetDocument.Open(filePath, false);
-            WorkbookPart workbookPart = doc.WorkbookPart;
-            Sheets sheets = workbookPart.Workbook.GetFirstChild<Sheets>();
+            var excelFile = new ExcelFile(filePath);
 
-            this.Projects = LoadProjects(workbookPart, sheets);
-            this.Contracts = LoadContracts(workbookPart, sheets, this.Projects);
+            this.Projects = LoadProjects(excelFile);
+            this.Contracts = LoadContracts(excelFile, this.Projects);
+            this.Leftovers = LoadLeftovers(excelFile);
 
          }
 
-        // TODO
-        // original ticket	follow-up tickets (comma-separated)
-        // ISRTOZEM-392	ISRTOZEM-534
-
-        private static List<Project> LoadProjects(WorkbookPart workbookPart, Sheets sheets)
+        private static List<Project> LoadProjects(ExcelFile excelFile)
         {
-            var sheet = sheets.Elements<Sheet>().FirstOrDefault(s => s.Name == "projects");
-            if (sheet == null)
-            {
-                throw new ArgumentException("Sheet 'projects' not found.");
-            }
-
-            var worksheet = ((WorksheetPart)workbookPart.GetPartById(sheet.Id)).Worksheet;
-            var sstPart = workbookPart.GetPartsOfType<SharedStringTablePart>().First();
-            var sst = sstPart.SharedStringTable;
+            excelFile.LoadSheet("projects");
+            var sst = excelFile.SharedStringTable;
             var projectList = new List<Project>();
 
             // Skip the first row (header)
-            foreach (Row row in worksheet.Descendants<Row>().Skip(1))
+            foreach (Row row in excelFile.Rows.Skip(1))
             {
-
                 var project = new Project()
                 {
                     Name = GetCellValue(row, 0, sst),
@@ -88,39 +135,50 @@ namespace Controlling
             return projectList;
         }
 
-        private static List<Contract> LoadContracts(WorkbookPart workbookPart, Sheets sheets, IEnumerable<Project> projects)
+        private static List<Contract> LoadContracts(ExcelFile excelFile, IEnumerable<Project> projects)
         {
-            var sheet = sheets.Elements<Sheet>().FirstOrDefault(s => s.Name == "contracts");
-            if (sheet == null)
-            {
-                throw new ArgumentException("Sheet 'contracts' not found.");
-            }
-
-            var worksheet = ((WorksheetPart)workbookPart.GetPartById(sheet.Id)).Worksheet;
-            var sstPart = workbookPart.GetPartsOfType<SharedStringTablePart>().First();
-            var sst = sstPart.SharedStringTable;
+            excelFile.LoadSheet("contracts");
+            var sst = excelFile.SharedStringTable;
             var contractList = new List<Contract>();
 
             // Skip the first row (header)
-            foreach (Row row in worksheet.Descendants<Row>().Skip(1))
+            foreach (Row row in excelFile.Rows.Skip(1))
             {
                 var contract = new Contract
                 {
                     Id = GetCellValue(row, 0, sst),
-                    Project = projects.FirstOrDefault (p => p.Name == GetCellValue(row, 1, sst)),
+                    Project = projects.Single(p => p.Name == GetCellValue(row, 1, sst)),
                     Name = GetCellValue(row, 2, sst),
                     StartDate = GetCellValue(row, 3, sst).ParseDate(),
                     EndDate = GetCellValue(row, 4, sst).ParseDate(),
                     Budget = float.Parse(GetCellValue(row, 5, sst), CultureInfo.InvariantCulture)
                 };
-                foreach (var project in projects)
-                {
-
-                }
                 contractList.Add(contract);
             }
             return contractList;
         }
+
+        private static List<Leftover> LoadLeftovers(ExcelFile excelFile)
+        {
+            excelFile.LoadSheet("leftovers");
+            SharedStringTable sst = excelFile.SharedStringTable;
+            var leftovers = new List<Leftover>();
+
+            // Skip the first row (header)
+            foreach (Row row in excelFile.Rows.Skip(1))
+            {
+                var leftover = new Leftover
+                {
+                    OriginalTicketKey = GetCellValue(row, 0, sst),
+                    FollowUpTicketKeys = GetCellValue(row, 1, sst).Split(',')
+                };
+
+                leftovers.Add(leftover);
+            }
+            return leftovers;
+        }
+
+
 
         private static string GetCellValue(Row row, int cellIndex, SharedStringTable sst)
         {

@@ -25,7 +25,7 @@ namespace Controlling
         {
             Console.WriteLine("----------------");
             Console.WriteLine("Wrong estimates:");
-
+            // TODO: can handle leftovers here.
             foreach (var ticket in tickets.Where(t => t.StoryPoints.HasValue))
             {
                 if (ticket.Percent > 1.1f)
