@@ -109,8 +109,8 @@ namespace Controlling
                     Id = GetCellValue(row, 0, sst),
                     Project = projects.FirstOrDefault (p => p.Name == GetCellValue(row, 1, sst)),
                     Name = GetCellValue(row, 2, sst),
-                    StartDate = ExcelHelper.ParseDate(GetCellValue(row, 3, sst)),
-                    EndDate = ExcelHelper.ParseDate(GetCellValue(row, 4, sst)),
+                    StartDate = GetCellValue(row, 3, sst).ParseDate(),
+                    EndDate = GetCellValue(row, 4, sst).ParseDate(),
                     Budget = float.Parse(GetCellValue(row, 5, sst), CultureInfo.InvariantCulture)
                 };
                 foreach (var project in projects)

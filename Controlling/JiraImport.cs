@@ -110,7 +110,7 @@ namespace Controlling
                 int columnIndex = 1;
                 foreach (Cell cell in headerRow.Descendants<Cell>())
                 {
-                    string columnName = ExcelHelper.GetCellValue(cell, stringTablePart);
+                    string columnName = cell.GetCellValue(stringTablePart);
                     columnIndexMap[columnName] = columnIndex++;
                 }
                 try
@@ -124,7 +124,7 @@ namespace Controlling
                         foreach (Cell cell in row.Descendants<Cell>())
                         {
                             string columnName = GetColumnName(columnIndexMap, cell);
-                            string cellValue = ExcelHelper.GetCellValue(cell, stringTablePart);
+                            string cellValue = cell.GetCellValue(stringTablePart);
 
                             SetPropertyValue(rowData, columnName, cellValue);
                         }
@@ -189,13 +189,13 @@ namespace Controlling
                     rowData.Resolution = cellValue;
                     break;
                 case "Created":
-                    rowData.Created = ExcelHelper.ParseDate(cellValue);
+                    rowData.Created = cellValue.ParseDate();
                     break;
                 case "Updated":
-                    rowData.Updated = ExcelHelper.ParseDate(cellValue);
+                    rowData.Updated = cellValue.ParseDate();
                     break;
                 case "Due date" or "Due":
-                    rowData.DueDate = string.IsNullOrWhiteSpace(cellValue) ? (DateOnly?)null : ExcelHelper.ParseDate(cellValue);
+                    rowData.DueDate = string.IsNullOrWhiteSpace(cellValue) ? (DateOnly?)null : cellValue.ParseDate();
                     break;
                 case "Sprint":
                     rowData.Sprint = cellValue;

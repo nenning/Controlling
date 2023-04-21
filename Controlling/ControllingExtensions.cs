@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace Controlling
 {
-    public static class ExcelHelper
+    public static class ControllingExtensions
     {
-        public static DateOnly ParseDate(string cellValue)
+        public static DateOnly ParseDate(this string cellValue)
         {
             return DateOnly.FromDateTime(DateTime.FromOADate(double.Parse(cellValue)));
         }
 
-        public static string GetCellValue(Cell cell, SharedStringTablePart stringTablePart)
+        public static string GetCellValue(this Cell cell, SharedStringTablePart stringTablePart)
         {
             if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
             {
@@ -27,17 +27,15 @@ namespace Controlling
                 return cell.InnerText;
             }
         }
-    }
 
-    public static class DateExtensions
-    {
         public static string DayMonth(this DateOnly date)
         {
             return $"{date.Day}.{date.Month}.";
         }
+
         public static bool IsMoreDaysAgoThan(this DateOnly date, int daysAgo)
         {
-            return date.AddDays(21) < DateOnly.FromDateTime(DateTime.Now);
+            return date.AddDays(daysAgo) < DateOnly.FromDateTime(DateTime.Now);
         }
     }
 }

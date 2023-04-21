@@ -68,7 +68,6 @@ namespace Controlling
                         TicketId = GetCellValue(cells[10], workbookPart)
                     };
                     //TODO jiraData.Add(data);
-                    Console.WriteLine();
                     //for (int i = 0; i < cells.Length; i++)
                     //{
                     //    //string text = cells[i].InnerText;
