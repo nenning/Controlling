@@ -93,6 +93,8 @@ namespace Controlling
         }
         private static JiraImport ReadExcelFile(string filePath, Project project)
         {
+            filePath = ControllingExtensions.CopyToTempFile(filePath);
+
             var jiraDataList = new List<TicketData>();
             var subTaskParents = new Dictionary<string, string>();
 

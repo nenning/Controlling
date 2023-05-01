@@ -9,7 +9,25 @@
 
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.19.0" />
+    <PackageReference Include="RestSharp" Version="110.2.0" />
     <PackageReference Include="System.Data.OleDb" Version="7.0.0" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<None Include="app.config.local" Condition="Exists('app.config.local')">
+			<Link>app.config</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
+	<Target Name="CopyAppConfigLocal" AfterTargets="Build" Condition="Exists('app.config.local')">
+		<PropertyGroup>
+			<AppConfigLocalFile>app.config.local</AppConfigLocalFile>
+			<AppConfigLocalOutputPath>$(OutDir)$(TargetFileName).config</AppConfigLocalOutputPath>
+		</PropertyGroup>
+		<Message Text="Checking for existence of $(AppConfigLocalFile)" Importance="high" />
+		<Message Text="Copying $(AppConfigLocalFile) to $(AppConfigLocalOutputPath)" Importance="high" Condition="Exists('$(AppConfigLocalFile)')" />
+		<Copy SourceFiles="$(AppConfigLocalFile)" DestinationFiles="$(AppConfigLocalOutputPath)" Condition="Exists('$(AppConfigLocalFile)')" />
+	</Target>
 
 </Project>

@@ -8,8 +8,21 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+
         try
         {
+            /*
+            // Get the Jira configuration values
+            string baseUrl = ConfigurationManager.AppSettings["Jira:BaseUrl"];
+            string username = ConfigurationManager.AppSettings["Jira:UserName"];
+            string apiKey = ConfigurationManager.AppSettings["Jira:ApiKey"];
+            string jql = ConfigurationManager.AppSettings["Jira:Jql"];
+
+            var jiraClient = new JiraApiClient(baseUrl, username, apiKey);
+            var issues = jiraClient.GetAllIssuesWithFields(jql);
+            */
+
             Console.WriteLine($"Starting import from {GetWorkingDirectory()}...");
 
             var settings = new ProjectSettings(FindLatestFile("abacus projects"));
@@ -37,6 +50,7 @@ internal class Program
                 if (ticket != null)
                 {
                     ticket.Hours += booking.Hours;
+                    booking.TicketId = ticket.Key;
                 }
                 else if (ticket != null && !ticket.Key.EndsWith(booking.TicketId))
                 {
@@ -50,13 +64,13 @@ internal class Program
             ShowReports(settings, jiraImport, bookings);
 
             Console.WriteLine();
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.WriteLine(ex.ToString());
         }
         Console.WriteLine("Press any key...");
         Console.ReadLine();
-
     }
 
     private static void ShowReports(ProjectSettings settings, JiraImport jiraImport, IEnumerable<Booking> bookings)
@@ -84,7 +98,7 @@ internal class Program
 
     static string GetWorkingDirectory()
     {
-        return ConfigurationManager.AppSettings["workingDirectory"];
+        return ConfigurationManager.AppSettings["App:WorkingDirectory"];
     }
 
     static string FindLatestFile(string filePrefix)

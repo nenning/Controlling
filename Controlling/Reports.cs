@@ -30,7 +30,7 @@ namespace Controlling
             {
                 if (ticket.Percent > 1.1f)
                 {
-                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Sprint: {ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -43,7 +43,7 @@ namespace Controlling
             {
                 if (ticket.Hours > 1.0f && !ticket.Updated.IsMoreDaysAgoThan(21))
                 {
-                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h (updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h (Sprint: {ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -61,7 +61,8 @@ namespace Controlling
                     DateOnly startDate = booking.Contract.StartDate;
                     DateOnly endDate = booking.Contract.EndDate;
                     int diff = (booking.Date < startDate) ? startDate.DayNumber - booking.Date.DayNumber : booking.Date.DayNumber - endDate.DayNumber;
-                    Console.WriteLine($" - {booking.Employee}: {booking.Date.DayMonth()} ({diff}d). {booking.Contract.Name} ({booking.Contract.Id}): {startDate.DayMonth()}-{endDate.DayMonth()}");
+                    string ticketId = string.IsNullOrWhiteSpace(booking.TicketId) ? "-" : booking.TicketId;
+                    Console.WriteLine($" - {booking.Employee}: {booking.Hours}h on {booking.Date.DayMonth()} (Δ {diff}d). {booking.Contract.Name} ({booking.Contract.Id}; jira: {ticketId}): {startDate.DayMonth()}-{endDate.DayMonth()}");
                 }
             }
         }

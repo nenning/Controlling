@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
@@ -56,10 +57,12 @@ namespace Controlling
         public IEnumerable<Row> Rows { get { return worksheet.Descendants<Row>(); } }
         public ExcelFile(string filePath)
         {
+            filePath = ControllingExtensions.CopyToTempFile(filePath);
             document = SpreadsheetDocument.Open(filePath, false);
             workbookPart = document.WorkbookPart;
             sheets = workbookPart.Workbook.GetFirstChild<Sheets>();
         }
+
 
         public void LoadSheet(string sheetName)
         {

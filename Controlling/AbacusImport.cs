@@ -35,6 +35,7 @@ namespace Controlling
         static string[] columns = { "Projekt-Nr.", "Mitarbeiter", "Datum", "Leistung", "Beschreibung", "V", "Abrechnung", "Anzahl", "Ansatz", "Betrag", "CR-Nr." };
         public static IEnumerable<Booking> ParseExcelFile(string fileName, ProjectSettings accounting)
         {
+            fileName = ControllingExtensions.CopyToTempFile(fileName);
             var abacusData = new List<Booking>();
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(fileName, false))
             {
