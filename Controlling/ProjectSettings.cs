@@ -1,15 +1,6 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Net.Sockets;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Controlling
 {
@@ -46,6 +37,7 @@ namespace Controlling
     }
     class ExcelFile : IDisposable {
         private bool disposedValue;
+        private TemporaryFile file;
         private SpreadsheetDocument document;
         private WorkbookPart workbookPart;
         private Worksheet worksheet;
@@ -57,7 +49,9 @@ namespace Controlling
         public IEnumerable<Row> Rows { get { return worksheet.Descendants<Row>(); } }
         public ExcelFile(string filePath)
         {
-            filePath = ControllingExtensions.CopyToTempFile(filePath);
+            file = TemporaryFile.CreateCopy(filePath);
+            filePath = file.FilePath;
+
             document = SpreadsheetDocument.Open(filePath, false);
             workbookPart = document.WorkbookPart;
             sheets = workbookPart.Workbook.GetFirstChild<Sheets>();
@@ -78,14 +72,17 @@ namespace Controlling
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!disposedValue && disposing)
             {
-                if (disposing && document != null)
+                if (document != null)
                 {
                     document.Dispose();
                 }
-
                 document = null;
+                if (file != null) { 
+                    file.Dispose(); 
+                }
+                file = null;
                 disposedValue = true;
             }
         }
@@ -109,7 +106,7 @@ namespace Controlling
 
         public ProjectSettings(string filePath)
         {
-            var excelFile = new ExcelFile(filePath);
+            using var excelFile = new ExcelFile(filePath);
 
             this.Projects = LoadProjects(excelFile);
             this.Contracts = LoadContracts(excelFile, this.Projects);

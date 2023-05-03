@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Vml;
-
-namespace Controlling
+﻿namespace Controlling
 {
     public class Reports
     {
@@ -18,17 +16,16 @@ namespace Controlling
                     Console.WriteLine($" - {employee}: {latest.Date.DayMonth()} ({latest.Contract.Name})");
                 }
             }
-            // Possible improvement: per project
         }
 
         public static void ShowWrongEstimates(IEnumerable<TicketData> tickets)
         {
             Console.WriteLine("----------------");
             Console.WriteLine("Wrong estimates:");
-            // TODO: can handle leftovers here.
+            // Idea: can handle leftovers here.
             foreach (var ticket in tickets.Where(t => t.StoryPoints.HasValue))
             {
-                if (ticket.Percent > 1.1f)
+                if (ticket.Percent > 1.1f && !ticket.Updated.IsMoreDaysAgoThan(16))
                 {
                     Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Sprint: {ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
@@ -72,7 +69,7 @@ namespace Controlling
             Console.WriteLine("----------------");
             Console.WriteLine("Overview of bookings per sprint:");
             var employees = bookings.DistinctBy(a => a.Employee).Select(b => b.Employee).ToList();
-            
+            // Idea: could group by location as well and show distribution & avg rate
             foreach (var contract in contracts)
             {
                 Console.WriteLine($"{contract.Name} ({contract.Id}): ");

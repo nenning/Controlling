@@ -1,6 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Controlling;
-using DocumentFormat.OpenXml.Wordprocessing;
 using System.Configuration;
 
 
@@ -27,7 +26,6 @@ internal class Program
 
             var settings = new ProjectSettings(FindLatestFile("abacus projects"));
 
-            // TODO could loop through reports by project.
             IEnumerable<TicketData> tasks = new List<TicketData>();
             Dictionary<string, string> subTasks = new();
             foreach (var project in settings.Projects)

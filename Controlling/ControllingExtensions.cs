@@ -1,12 +1,6 @@
-﻿using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Controlling
 {
@@ -76,24 +70,6 @@ namespace Controlling
 
         public static JsonElement? TryGetProperty(this JsonElement element, string propertyName) =>
             element.TryGetProperty(propertyName, out var result) ? result : null;
-
-        public static string CopyToTempFile(string filePath)
-        {
-            string tempFileName = System.IO.Path.GetFileNameWithoutExtension(filePath) + "_" + System.IO.Path.GetRandomFileName() + System.IO.Path.GetExtension(filePath);
-            string tempFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), tempFileName);
-            try
-            {
-                // Copy the source file to the temporary location
-                File.Copy(filePath, tempFilePath, true);
-                filePath = tempFilePath;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: couldn't copy file to temp location, using original file. {ex}");
-            }
-            return filePath;
-        }
-
 
     }
 }

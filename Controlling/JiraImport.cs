@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using Controlling;
-using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace Controlling
@@ -93,7 +87,8 @@ namespace Controlling
         }
         private static JiraImport ReadExcelFile(string filePath, Project project)
         {
-            filePath = ControllingExtensions.CopyToTempFile(filePath);
+            using var file = TemporaryFile.CreateCopy(filePath);
+            filePath = file.FilePath;
 
             var jiraDataList = new List<TicketData>();
             var subTaskParents = new Dictionary<string, string>();

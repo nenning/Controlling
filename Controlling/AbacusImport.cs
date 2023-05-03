@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.OleDb;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -35,7 +28,8 @@ namespace Controlling
         static string[] columns = { "Projekt-Nr.", "Mitarbeiter", "Datum", "Leistung", "Beschreibung", "V", "Abrechnung", "Anzahl", "Ansatz", "Betrag", "CR-Nr." };
         public static IEnumerable<Booking> ParseExcelFile(string fileName, ProjectSettings accounting)
         {
-            fileName = ControllingExtensions.CopyToTempFile(fileName);
+            using var file = TemporaryFile.CreateCopy(fileName);
+            fileName = file.FilePath;
             var abacusData = new List<Booking>();
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(fileName, false))
             {
