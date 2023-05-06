@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Controlling;
 using System.Configuration;
-
+using System.Diagnostics;
 
 internal class Program
 {
@@ -21,8 +21,9 @@ internal class Program
             var jiraClient = new JiraApiClient(baseUrl, username, apiKey);
             var issues = jiraClient.GetAllIssuesWithFields(jql);
             */
-
-            Console.WriteLine($"Starting import from {GetWorkingDirectory()}...");
+            var workingDirectory = GetWorkingDirectory();
+            Console.WriteLine($"Starting import from {workingDirectory}...");
+            ForceOneDriveSync(workingDirectory);
 
             var settings = new ProjectSettings(FindLatestFile("abacus projects"));
 
@@ -71,6 +72,26 @@ internal class Program
         Console.ReadLine();
     }
 
+    private static void ForceOneDriveSync(string folderPath)
+    {
+        if (!Directory.Exists(folderPath))
+        {
+            throw new InvalidOperationException("Folder not found {folderPath}.");
+        }
+        string tempFilePath = Path.Combine(folderPath, "temp_sync_trigger.txt");
+        try
+        {
+            // Create a temporary file in the folder
+            File.WriteAllText(tempFilePath, "OneDrive sync trigger");
+            // Wait for a short time to allow OneDrive to detect the change
+            var delayMilliseconds = Debugger.IsAttached ? 0 : 5000;
+            Thread.Sleep(delayMilliseconds);
+        }
+        finally
+        {
+            File.Delete(tempFilePath);
+        }
+    }
     private static void ShowReports(ProjectSettings settings, JiraImport jiraImport, IEnumerable<Booking> bookings)
     {
         foreach (var project in settings.Projects)
