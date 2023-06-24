@@ -13,6 +13,10 @@ namespace Controlling
 
         public static string GetCellValue(this Cell cell, SharedStringTablePart stringTablePart)
         {
+            if (cell.CellFormula != null)
+            {
+                return string.Empty;
+            }
             if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
             {
                 int index = int.Parse(cell.InnerText);

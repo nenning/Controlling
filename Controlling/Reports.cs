@@ -18,11 +18,12 @@
             }
         }
 
-        public static void ShowWrongEstimates(IEnumerable<TicketData> tickets)
+        public static void ShowWrongEstimates(IEnumerable<TicketData> tickets, ProjectSettings settings)
         {
             Console.WriteLine("----------------");
             Console.WriteLine("Wrong estimates:");
             // Idea: can handle leftovers here.
+            
             foreach (var ticket in tickets.Where(t => t.StoryPoints.HasValue))
             {
                 if (ticket.Percent > 1.1f && !ticket.Updated.IsMoreDaysAgoThan(16))

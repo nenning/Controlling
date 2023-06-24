@@ -117,15 +117,20 @@ namespace Controlling
                     {
                         var rowData = new TicketData();
                         rowData.Project = project;
-
+                        bool skip = false;
                         foreach (Cell cell in row.Descendants<Cell>())
                         {
+                            if (cell.CellFormula != null)
+                            {
+                                skip = true;
+                                break;
+                            }
                             string columnName = GetColumnName(columnIndexMap, cell);
                             string cellValue = cell.GetCellValue(stringTablePart);
 
                             SetPropertyValue(rowData, columnName, cellValue);
                         }
-                        if (rowData.IssueType.ToLowerInvariant() != "sub-task")
+                        if (!skip && rowData.IssueType.ToLowerInvariant() != "sub-task")
                         {
                             jiraDataList.Add(rowData);
                             if (!string.IsNullOrEmpty(rowData.SubTasks))

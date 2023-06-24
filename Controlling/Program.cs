@@ -107,7 +107,7 @@ internal class Program
 
             Reports.ShowWarnings(currentContracts, currentBookings, currentTickets);
             Reports.ShowLateBooking(currentBookings);
-            Reports.ShowWrongEstimates(currentTickets);
+            Reports.ShowWrongEstimates(currentTickets, settings);
             Reports.ShowOutOfSprintBookings(currentBookings);
             Reports.ShowTicketsWithWorkWithoutEstimates(currentTickets);
             Reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets);

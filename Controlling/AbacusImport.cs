@@ -56,6 +56,12 @@ namespace Controlling
                         Rate = float.Parse(GetCellValue(cells[8], workbookPart), CultureInfo.InvariantCulture),
                         TicketId = GetCellValue(cells[10], workbookPart)
                     };
+                    if (data.Contract == null)
+                    {
+                        Console.WriteLine($"!!! Abacus project not found: {cells[0].CellValue.InnerText}.");
+                        Console.ReadLine();
+                        Environment.Exit(-1);
+                    }
                     abacusData.Add(data);
                 }
             }
