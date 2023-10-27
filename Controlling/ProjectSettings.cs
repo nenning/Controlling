@@ -147,7 +147,7 @@ namespace Controlling
                 var contract = new Contract
                 {
                     Id = GetCellValue(row, 0, sst),
-                    Project = projects.Single(p => p.Name == GetCellValue(row, 1, sst)),
+                    Project = projects.FirstOrDefault(p => p.Name == GetCellValue(row, 1, sst)),
                     Name = GetCellValue(row, 2, sst),
                     StartDate = GetCellValue(row, 3, sst).ParseDate(),
                     EndDate = GetCellValue(row, 4, sst).ParseDate(),

@@ -23,6 +23,8 @@ namespace Controlling
         public string SubTasks { get; set; }
         public string Verrechenbarkeit { get; set; }
         public Project Project { get; set; }
+        public Contract Contract { get; set; }
+
         // Calculated fields
         public double Hours { get; set; }
         public double Days { get {  return Hours/8.0; } }

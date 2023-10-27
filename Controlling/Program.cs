@@ -31,6 +31,7 @@ internal class Program
             Dictionary<string, string> subTasks = new();
             foreach (var project in settings.Projects)
             {
+                if (project.JiraKey == "undefined") continue;
                 var jiraData = JiraImporter.Import(FindLatestFile(project.FilePrefix), project);
                 tasks = Enumerable.Concat(tasks, jiraData.Tasks);
                 subTasks = jiraData.SubTasks.Concat(subTasks).ToDictionary(x => x.Key, x => x.Value);
@@ -50,6 +51,7 @@ internal class Program
                 {
                     ticket.Hours += booking.Hours;
                     booking.TicketId = ticket.Key;
+                    ticket.Contract = booking.Contract;
                 }
                 else if (ticket != null && !ticket.Key.EndsWith(booking.TicketId))
                 {
@@ -102,6 +104,11 @@ internal class Program
             Console.WriteLine($"****************");
 
             var currentBookings = bookings.Where(x => x.Contract.Project.Name == project.Name).ToList();
+            if (project.JiraKey == "undefined")
+            {
+                Reports.ShowCostCeiling(currentBookings);
+                continue;
+            }
             var currentTickets = jiraImport.Tasks.Where(x => x.Project.Name == project.Name).ToList();
             var currentContracts = settings.Contracts.Where(x => x.Project.Name == project.Name).ToList();
 
@@ -111,6 +118,9 @@ internal class Program
             Reports.ShowOutOfSprintBookings(currentBookings);
             Reports.ShowTicketsWithWorkWithoutEstimates(currentTickets);
             Reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets);
+            Reports.ShowStoryEstimates(currentTickets, currentContracts);
+            Reports.ShowMarginPerSprint(currentTickets, currentContracts);
+            
 
         }
     }

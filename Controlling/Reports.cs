@@ -1,4 +1,6 @@
-﻿namespace Controlling
+﻿using System.Net.Sockets;
+
+namespace Controlling
 {
     public class Reports
     {
@@ -28,10 +30,77 @@
             {
                 if (ticket.Percent > 1.1f && !ticket.Updated.IsMoreDaysAgoThan(16))
                 {
-                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Sprint: {ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
+
+        public static void ShowStoryEstimates(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
+        {
+            Console.WriteLine("----------------");
+            Console.WriteLine("Story estimates:");
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21))) {
+                Console.WriteLine($" - {contract.Name}:");
+                foreach (var ticket in tickets.Where(t => (t.IssueType == "Story" || t.IssueType == "Task") && t.StoryPoints.HasValue && t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
+                {
+                    Console.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Status: {ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
+                }
+            }
+        }
+
+        
+        public static void ShowCostCeiling(IEnumerable<Booking> bookings)
+        {
+            Console.WriteLine("----------------");
+            Console.WriteLine("Cost Ceiling:");
+            const double archCeiling = 400;
+            const double devCeiling = 950;
+            double architectureTasks = 0;
+            double devTasks = 0;
+            int currentMonths = 0;
+            int totalMonths = 0;
+            foreach (var booking in bookings)
+            {
+                if (booking.WorkType == "fachliche Konzeption")
+                {
+                    architectureTasks += booking.Hours;
+                } else
+                {
+                    devTasks += booking.Hours;
+                }
+                if (currentMonths == 0 && totalMonths == 0) {
+                    currentMonths = GetMonthsDifference(booking.Contract.StartDate, DateOnly.FromDateTime(DateTime.Now));
+                    totalMonths = GetMonthsDifference(booking.Contract.StartDate, booking.Contract.EndDate);
+                }
+            }
+            
+            Console.WriteLine($" - Arch: {architectureTasks*100 / archCeiling:N0}% ({architectureTasks:N0}h of {archCeiling:N0}h)");
+            Console.WriteLine($" - Dev: {devTasks*100 / devCeiling:N0}% ({devTasks:N0}h of {devCeiling:N0}h)");
+            Console.WriteLine($" - Total: {(devTasks +architectureTasks) * 100 / (devCeiling+archCeiling):N0}% ({devTasks + architectureTasks:N0}h of {devCeiling + archCeiling:N0}h)");
+            Console.WriteLine($" - Time: {currentMonths*100 / totalMonths:N0}% ({currentMonths:N0} of {totalMonths:N0} months)");
+        }
+
+        public static int GetMonthsDifference(DateOnly startDate, DateOnly endDate)
+        {
+            return (endDate.Year - startDate.Year) * 12 + endDate.Month - startDate.Month;
+        }
+        public static void ShowMarginPerSprint(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
+        {
+            Console.WriteLine("----------------");
+            Console.WriteLine("Margins per Sprint:");
+            foreach (var contract in contracts)
+            {
+                double plan = 0; 
+                double actual = 0;
+                foreach (var ticket in tickets.Where(t => t.IssueType == "Story" && t.StoryPoints.HasValue && t.Hours > 0.0f && t.Contract?.Id == contract.Id))
+                {
+                    plan += ticket.StoryPoints.Value * 8 * ticket.Project.DaysPerStoryPoint;
+                    actual += ticket.Hours;
+                }
+                Console.WriteLine($" - {plan/actual:N2} ({contract.Name}). Plan: {plan/8:N2}, Actual: {actual/8:N2}");
+            }
+        }
+
         public static void ShowTicketsWithWorkWithoutEstimates(IEnumerable<TicketData> tickets)
         {
             Console.WriteLine("----------------");
@@ -39,9 +108,9 @@
 
             foreach (var ticket in tickets.Where(t => !t.StoryPoints.HasValue || t.StoryPoints.Value==0))
             {
-                if (ticket.Hours > 1.0f && !ticket.Updated.IsMoreDaysAgoThan(21))
+                if (ticket.Hours > 1.0f && !ticket.Contract.EndDate.IsMoreDaysAgoThan(21))
                 {
-                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h (Sprint: {ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h ({ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -71,7 +140,7 @@
             Console.WriteLine("Overview of bookings per sprint:");
             var employees = bookings.DistinctBy(a => a.Employee).Select(b => b.Employee).ToList();
             // Idea: could group by location as well and show distribution & avg rate
-            foreach (var contract in contracts)
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21)))
             {
                 Console.WriteLine($"{contract.Name} ({contract.Id}): ");
                 double totalHours = 0;
