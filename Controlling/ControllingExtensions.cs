@@ -4,8 +4,17 @@ using System.Text.Json;
 
 namespace Controlling
 {
-    public static class ControllingExtensions
+    public static class Tools
     {
+        public static void UseErrorColors()
+        {
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        public static void UseStandardColors() {
+            Console.ResetColor();
+        }
+
         public static DateOnly ParseDate(this string cellValue)
         {
             return DateOnly.FromDateTime(DateTime.FromOADate(double.Parse(cellValue)));

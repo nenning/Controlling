@@ -57,9 +57,9 @@ internal class Program
                 }
                 else if (ticket != null && !ticket.Key.EndsWith(booking.TicketId))
                 {
-                    UseErrorColors();
+                    Tools.UseErrorColors();
                     Console.WriteLine($"Wrong ticket entry: {booking}");
-                    Console.ResetColor();
+                    Tools.UseStandardColors();
                 }
                 // could improve class references
             }
@@ -77,13 +77,7 @@ internal class Program
         Console.WriteLine("Press any key...");
         Console.ReadLine();
     }
-
-    private static void UseErrorColors()
-    {
-        Console.BackgroundColor = ConsoleColor.DarkRed;
-        Console.ForegroundColor = ConsoleColor.White;
-    }
-
+        
     private static void ForceOneDriveSync(string folderPath)
     {
         if (!Directory.Exists(folderPath))
@@ -180,9 +174,9 @@ internal class Program
         Console.WriteLine($" - importing: {Path.GetFileName(latestFile)} (updated: {created})");
         if (warnAboutOldFile && DateTime.Now.Subtract(TimeSpan.FromDays(3)) > created)
         {
-            UseErrorColors();
+            Tools.UseErrorColors();
             Console.WriteLine("     Outdated!     ");
-            Console.ResetColor();
+            Tools.UseStandardColors();
         }
 
 

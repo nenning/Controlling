@@ -139,7 +139,7 @@ namespace Controlling
             Console.WriteLine("----------------");
             Console.WriteLine("Overview of bookings per sprint:");
             var employees = bookings.DistinctBy(a => a.Employee).Select(b => b.Employee).ToList();
-            // Idea: could group by location as well and show distribution & avg rate
+            // Idea: could group by location as well and show distribution
             foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21)))
             {
                 Console.WriteLine($"{contract.Name} ({contract.Id}): ");
@@ -166,14 +166,13 @@ namespace Controlling
                         totalCost += booking.Hours * person.HourlyRate;
                     }
                 }
-                Console.WriteLine($". Average cost per hour: CHF {totalCost / totalHours:N2}");
+                Console.WriteLine($". Blended rate per hour: CHF {totalCost / totalHours:N2}");
             }
         }
 
         public static void ShowWarnings(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
         {
-            Console.BackgroundColor = ConsoleColor.DarkRed;
-            Console.ForegroundColor = ConsoleColor.White;
+            Tools.UseErrorColors();
 
             var contractsWithoutBooking = new List<Contract>();
             foreach (var contract in contracts)
@@ -206,7 +205,7 @@ namespace Controlling
             {
                 Console.WriteLine($"Missing persons: {string.Join(", ", missingPersons)}");
             }
-            Console.ResetColor();
+            Tools.UseStandardColors();
         }
 
     }

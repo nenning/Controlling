@@ -58,7 +58,9 @@ namespace Controlling
                     };
                     if (data.Contract == null)
                     {
+                        Tools.UseErrorColors();
                         Console.WriteLine($"!!! Abacus project not found: {cells[0].CellValue.InnerText}.");
+                        Tools.UseStandardColors();
                         Console.ReadLine();
                         Environment.Exit(-1);
                     }
