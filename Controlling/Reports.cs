@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using System.Net.Sockets;
 
 namespace Controlling
 {
@@ -30,7 +31,7 @@ namespace Controlling
             {
                 if (ticket.Percent > 1.1f && !ticket.Updated.IsMoreDaysAgoThan(16))
                 {
-                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($" - {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Sprint}, Status: {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -43,7 +44,7 @@ namespace Controlling
                 Console.WriteLine($" - {contract.Name}:");
                 foreach (var ticket in tickets.Where(t => (t.IssueType == "Story" || t.IssueType == "Task") && t.StoryPoints.HasValue && t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
                 {
-                    Console.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Status: {ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
+                    Console.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Status: {ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -73,7 +74,6 @@ namespace Controlling
                     totalMonths = GetMonthsDifference(booking.Contract.StartDate, booking.Contract.EndDate);
                 }
             }
-            
             Console.WriteLine($" - Arch: {architectureTasks*100 / archCeiling:N0}% ({architectureTasks:N0}h of {archCeiling:N0}h)");
             Console.WriteLine($" - Dev: {devTasks*100 / devCeiling:N0}% ({devTasks:N0}h of {devCeiling:N0}h)");
             Console.WriteLine($" - Total: {(devTasks +architectureTasks) * 100 / (devCeiling+archCeiling):N0}% ({devTasks + architectureTasks:N0}h of {devCeiling + archCeiling:N0}h)");
@@ -134,7 +134,7 @@ namespace Controlling
             }
         }
 
-        public static void ShowBookingsByEmployeeBySprint(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets)
+        public static void ShowBookingsByEmployeeBySprint(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
         {
             Console.WriteLine("----------------");
             Console.WriteLine("Overview of bookings per sprint:");
@@ -143,7 +143,7 @@ namespace Controlling
             foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21)))
             {
                 Console.WriteLine($"{contract.Name} ({contract.Id}): ");
-                double totalHours = 0;
+                double workHours = 0;
                 foreach (var employee in employees)
                 {
                     double hours = bookings.Aggregate(0.0f, (total, next) => next.Employee==employee && next.Contract.Id == contract.Id ? total + next.Hours : total);
@@ -151,14 +151,30 @@ namespace Controlling
                     {
                         Console.WriteLine($" - {employee}: {Math.Round(hours / 8.0, 1)}d");
                     }
-                    totalHours += hours;
+                    workHours += hours;
                 }
-                Console.WriteLine($" = Total: {Math.Round(totalHours / 8.0, 1)}d, {totalHours * 119:N0} CHF (Plan: {contract.Budget / 119 / 8}d, {contract.Budget:N0} CHF)");
+                Console.Write($" = Total: {Math.Round(workHours / 8.0, 1)}d, {workHours * 119:N0} CHF (Plan: {contract.Budget / 119 / 8}d, {contract.Budget:N0} CHF)");
+
+                double totalHours = 0.0;
+                double totalCost = 0.0;
+                foreach (var booking in bookings.Where(b => b.Contract == contract))
+                {
+                    var person = persons.FirstOrDefault(p => p.Name == booking.Employee);
+                    if (person?.HourlyRate > 1.0f)
+                    {
+                        totalHours += booking.Hours;
+                        totalCost += booking.Hours * person.HourlyRate;
+                    }
+                }
+                Console.WriteLine($". Average cost per hour: CHF {totalCost / totalHours:N2}");
             }
         }
 
-        public static void ShowWarnings(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets)
+        public static void ShowWarnings(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
         {
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.White;
+
             var contractsWithoutBooking = new List<Contract>();
             foreach (var contract in contracts)
             {
@@ -170,12 +186,28 @@ namespace Controlling
             if (contractsWithoutBooking.Count > 0)
             {
                 Console.WriteLine("----------------");
+
                 Console.WriteLine("Warning: Contract(s) without bookings found - check if they are part of the abacus export");
                 foreach (var contract in contractsWithoutBooking)
                 {
                     Console.WriteLine($" - {contract.Name} ({contract.Id})");
                 }
             }
+            
+            var missingPersons = new HashSet<string>();
+            foreach (var booking in bookings)
+            {
+                if (!persons.Any(p => p.Name == booking.Employee))
+                {
+                    missingPersons.Add(booking.Employee);
+                }
+            }
+            if (missingPersons.Count > 0)
+            {
+                Console.WriteLine($"Missing persons: {string.Join(", ", missingPersons)}");
+            }
+            Console.ResetColor();
         }
+
     }
 }

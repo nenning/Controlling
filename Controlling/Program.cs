@@ -23,8 +23,11 @@ internal class Program
             */
             var workingDirectory = GetWorkingDirectory();
             Console.WriteLine($"Starting import from {workingDirectory}...");
+
+            Console.Title = "Waiting for OneDrive Sync...";
             ForceOneDriveSync(workingDirectory);
 
+            Console.Title = "Importing files...";
             var settings = new ProjectSettings(FindLatestFile("abacus projects"));
 
             IEnumerable<TicketData> tasks = new List<TicketData>();
@@ -42,8 +45,7 @@ internal class Program
                 SubTasks = subTasks
             };
 
-            var bookings = AbacusImport.ParseExcelFile(FindLatestFile("Leistungsauszug"), settings);
-
+            var bookings = AbacusImport.ParseExcelFile(FindLatestFile("Leistungsauszug", warnAboutOldFile:true), settings);
             foreach (var booking in bookings)
             {
                 var ticket = jiraImport.FindTask(booking.TicketId, booking.Contract.Project.JiraKey);
@@ -55,13 +57,15 @@ internal class Program
                 }
                 else if (ticket != null && !ticket.Key.EndsWith(booking.TicketId))
                 {
+                    UseErrorColors();
                     Console.WriteLine($"Wrong ticket entry: {booking}");
+                    Console.ResetColor();
                 }
                 // could improve class references
             }
 
-            // TODO: could consider aggregated Tasks (leftovers)
-
+            // Idea: could consider aggregated Tasks (leftovers)
+            Console.Title = "Controlling";
             ShowReports(settings, jiraImport, bookings);
 
             Console.WriteLine();
@@ -72,6 +76,12 @@ internal class Program
         }
         Console.WriteLine("Press any key...");
         Console.ReadLine();
+    }
+
+    private static void UseErrorColors()
+    {
+        Console.BackgroundColor = ConsoleColor.DarkRed;
+        Console.ForegroundColor = ConsoleColor.White;
     }
 
     private static void ForceOneDriveSync(string folderPath)
@@ -98,10 +108,7 @@ internal class Program
     {
         foreach (var project in settings.Projects)
         {
-            Console.WriteLine();
-            Console.WriteLine($"****************");
-            Console.WriteLine($"  Project: {project.Name}");
-            Console.WriteLine($"****************");
+            PrintProjectTitle(project);
 
             var currentBookings = bookings.Where(x => x.Contract.Project.Name == project.Name).ToList();
             if (project.JiraKey == "undefined")
@@ -112,17 +119,31 @@ internal class Program
             var currentTickets = jiraImport.Tasks.Where(x => x.Project.Name == project.Name).ToList();
             var currentContracts = settings.Contracts.Where(x => x.Project.Name == project.Name).ToList();
 
-            Reports.ShowWarnings(currentContracts, currentBookings, currentTickets);
+            Reports.ShowWarnings(currentContracts, currentBookings, currentTickets, settings.Persons);
             Reports.ShowLateBooking(currentBookings);
             Reports.ShowWrongEstimates(currentTickets, settings);
             Reports.ShowOutOfSprintBookings(currentBookings);
             Reports.ShowTicketsWithWorkWithoutEstimates(currentTickets);
-            Reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets);
+            Reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets, settings.Persons);
             Reports.ShowStoryEstimates(currentTickets, currentContracts);
             Reports.ShowMarginPerSprint(currentTickets, currentContracts);
-            
-
         }
+    }
+
+    private static void PrintProjectTitle(Project project)
+    {
+        var projectText = $"Project: {project.Name}";
+        var line = new string('*', projectText.Length + 6);
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine(line);
+        Console.Write("*  ");
+        Console.BackgroundColor = ConsoleColor.DarkBlue;
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(projectText);
+        Console.ResetColor();
+        Console.WriteLine("  *");
+        Console.WriteLine(line);
     }
 
     static string GetWorkingDirectory()
@@ -130,7 +151,7 @@ internal class Program
         return ConfigurationManager.AppSettings["App:WorkingDirectory"];
     }
 
-    static string FindLatestFile(string filePrefix)
+    static string FindLatestFile(string filePrefix, bool warnAboutOldFile = false)
     {
         string directoryPath = GetWorkingDirectory();
         string searchPattern = filePrefix + "*";
@@ -155,8 +176,15 @@ internal class Program
             if (file != latestFile)
                 File.Delete(file);
         }
+        var created = File.GetLastWriteTime(latestFile);
+        Console.WriteLine($" - importing: {Path.GetFileName(latestFile)} (updated: {created})");
+        if (warnAboutOldFile && DateTime.Now.Subtract(TimeSpan.FromDays(3)) > created)
+        {
+            UseErrorColors();
+            Console.WriteLine("     Outdated!     ");
+            Console.ResetColor();
+        }
 
-        Console.WriteLine($" - importing: {Path.GetFileName(latestFile)} (updated: {File.GetLastWriteTime(latestFile)})");
 
         return latestFile;
     }

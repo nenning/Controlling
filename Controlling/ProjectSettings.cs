@@ -29,6 +29,11 @@ namespace Controlling
             return $"Project {{ Name = {Name}, JiraKey = {JiraKey}, DaysPerStoryPoint = {DaysPerStoryPoint}, FilePrefix = {FilePrefix} }}";
         }
     }
+    public class Person
+    {
+        public string Name { get; set; }
+        public float HourlyRate { get; set; }
+    }
     public class Leftover
     {
         // columns: original ticket	follow-up tickets (comma-separated)
@@ -101,6 +106,7 @@ namespace Controlling
 
         public IEnumerable<Contract> Contracts { get; private set; }
         public IEnumerable<Project> Projects { get; private set; }
+        public IEnumerable<Person> Persons { get; private set; }
         public List<Leftover> Leftovers { get; private set; }
 
 
@@ -110,8 +116,8 @@ namespace Controlling
 
             this.Projects = LoadProjects(excelFile);
             this.Contracts = LoadContracts(excelFile, this.Projects);
+            this.Persons = LoadRates(excelFile, this.Projects);
             this.Leftovers = LoadLeftovers(excelFile);
-
          }
 
         private static List<Project> LoadProjects(ExcelFile excelFile)
@@ -156,6 +162,25 @@ namespace Controlling
                 contractList.Add(contract);
             }
             return contractList;
+        }
+
+        private static List<Person> LoadRates(ExcelFile excelFile, IEnumerable<Project> projects)
+        {
+            excelFile.LoadSheet("rates");
+            var sst = excelFile.SharedStringTable;
+            var personList = new List<Person>();
+
+            // Skip the first row (header)
+            foreach (Row row in excelFile.Rows.Skip(1))
+            {
+                var person = new Person
+                {
+                    Name = GetCellValue(row, 0, sst),
+                    HourlyRate = float.Parse(GetCellValue(row, 1, sst), CultureInfo.InvariantCulture)
+                };
+                personList.Add(person);
+            }
+            return personList;
         }
 
         private static List<Leftover> LoadLeftovers(ExcelFile excelFile)
