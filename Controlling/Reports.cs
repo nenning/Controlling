@@ -97,7 +97,7 @@ namespace Controlling
                     plan += ticket.StoryPoints.Value * 8 * ticket.Project.DaysPerStoryPoint;
                     actual += ticket.Hours;
                 }
-                Console.WriteLine($" - {plan/actual:N2} ({contract.Name}). Plan: {plan/8:N2}, Actual: {actual/8:N2}");
+                Console.WriteLine($" - {plan/actual:N2} ({contract.Name}). Plan: {plan/8:N2}d, Actual: {actual/8:N2}d");
             }
         }
 
