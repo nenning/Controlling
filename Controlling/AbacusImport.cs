@@ -24,9 +24,9 @@ namespace Controlling
     }
     internal class AbacusImport
     {
-
         static string[] columns = { "Projekt-Nr.", "Mitarbeiter", "Datum", "Leistung", "Beschreibung", "V", "Abrechnung", "Anzahl", "Ansatz", "Betrag", "CR-Nr." };
-        public static IEnumerable<Booking> ParseExcelFile(string fileName, ProjectSettings accounting)
+
+        public static IEnumerable<Booking> ParseExcelFile(string fileName, ProjectSettings accounting, IOutput output)
         {
             using var file = TemporaryFile.CreateCopy(fileName);
             fileName = file.FilePath;
@@ -58,9 +58,7 @@ namespace Controlling
                     };
                     if (data.Contract == null)
                     {
-                        Tools.UseErrorColors();
-                        Console.WriteLine($"!!! Abacus project not found: {cells[0].CellValue.InnerText}.");
-                        Tools.UseStandardColors();
+                        output.WriteLine($"!!! Abacus project not found: {cells[0].CellValue.InnerText}.", isError: true);
                         Console.ReadLine();
                         Environment.Exit(-1);
                     }

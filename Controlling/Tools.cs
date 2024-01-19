@@ -6,15 +6,6 @@ namespace Controlling
 {
     public static class Tools
     {
-        public static void UseErrorColors()
-        {
-            Console.BackgroundColor = ConsoleColor.DarkRed;
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-        public static void UseStandardColors() {
-            Console.ResetColor();
-        }
-
         public static DateOnly ParseDate(this string cellValue)
         {
             return DateOnly.FromDateTime(DateTime.FromOADate(double.Parse(cellValue)));
@@ -44,7 +35,7 @@ namespace Controlling
 
         public static bool IsMoreDaysAgoThan(this DateOnly date, int daysAgo)
         {
-            return date.AddDays(daysAgo) < DateOnly.FromDateTime(DateTime.Now);
+            return date.AddDays(daysAgo) < DateOnly.FromDateTime(TimeProvider.Instance.Now);
         }
         public static bool TryGetString(this JsonElement element, out string value)
         {
