@@ -35,11 +35,11 @@ namespace Controlling
             output.WriteLine("Wrong estimates:");
             // Idea: can handle leftovers here.
             
-            foreach (var ticket in tickets.Where(t => t.StoryPoints.HasValue))
+            foreach (var ticket in tickets.Where(t => t.TotalPoints > 0))
             {
                 if (ticket.Percent > 1.1f && !ticket.Updated.IsMoreDaysAgoThan(16))
                 {
-                    output.WriteLine($" - {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Sprint}, {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    output.WriteLine($" - {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.TotalPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Sprint}, {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -50,9 +50,9 @@ namespace Controlling
             output.WriteLine("Story estimates:");
             foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21))) {
                 output.WriteLine($" - {contract.Name}:");
-                foreach (var ticket in tickets.Where(t => (t.IssueType == "Story" || t.IssueType == "Task") && t.StoryPoints.HasValue && t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
+                foreach (var ticket in tickets.Where(t => (t.IssueType == "Story" || t.IssueType == "Task") && t.TotalPoints > 0 && t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
                 {
-                    output.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.StoryPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
+                    output.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.TotalPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -100,9 +100,9 @@ namespace Controlling
             {
                 double plan = 0; 
                 double actual = 0;
-                foreach (var ticket in tickets.Where(t => t.StoryPoints.HasValue && t.Contract?.Id == contract.Id))
+                foreach (var ticket in tickets.Where(t => t.TotalPoints > 0 && t.Contract?.Id == contract.Id))
                 {
-                    plan += ticket.StoryPoints.Value * 8 * ticket.Project.DaysPerStoryPoint;
+                    plan += ticket.TotalPoints * 8 * ticket.Project.DaysPerStoryPoint;
                     actual += ticket.Hours;
                 }
                 output.WriteLine($" - {plan/actual:0.#} ({contract.Name}). Plan: {plan/8:0.#}d, Actual: {actual/8:0.#}d");
@@ -114,11 +114,11 @@ namespace Controlling
             output.WriteLine("----------------");
             output.WriteLine("No estimates:");
 
-            foreach (var ticket in tickets.OrderBy(t => t.Sprint ?? string.Empty).Where(t => !t.StoryPoints.HasValue || t.StoryPoints.Value==0))
+            foreach (var ticket in tickets.OrderBy(t => t.Sprint ?? string.Empty).Where(t => t.TotalPoints <= 0.000001f))
             {
                 if (ticket.Hours > 1.0f && !ticket.Contract.EndDate.IsMoreDaysAgoThan(21))
                 {
-                    output.WriteLine($" - {ticket.Key} actual: {ticket.Hours}h ({ticket.Sprint}, {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
+                    output.WriteLine($" - {ticket.Key} actual: {ticket.Hours:0.#}h ({ticket.Sprint}, {ticket.Status}, Updated: {ticket.Updated.DayMonth()}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
@@ -161,7 +161,7 @@ namespace Controlling
                     }
                     workHours += hours;
                 }
-                output.Write($" = Total: {workHours / 8.0:0.#}d, {workHours * 119:N0} CHF (Plan: {contract.Budget / 119 / 8:0.#}d, {contract.Budget:N0} CHF)");
+                output.Write($" = Total: {workHours / 8.0:0.#}d, {workHours * contract.HourlyRate:N0} CHF (Plan: {contract.Budget / contract.HourlyRate / 8:0.#}d, {contract.Budget:N0} CHF)");
 
                 double totalHours = 0.0;
                 double totalCost = 0.0;
