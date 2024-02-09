@@ -12,7 +12,8 @@ namespace Controlling
         public DateOnly StartDate { get; init; }
         public DateOnly EndDate { get; init; }
         public float Budget { get; init; }
-        public float Estimate => Budget / 8.0f / 119.0f;
+        public int HourlyRate { get; init; } = 119;
+        public float Estimate => Budget / 8.0f / HourlyRate;
         public override string ToString()
         {
             return $"Contract {{ Project = {Project}, Name = {Name}, Id = {Id}, StartDate = {StartDate}, EndDate = {EndDate}, Budget = {Budget}, Estimate = {Estimate} }}";
@@ -24,6 +25,7 @@ namespace Controlling
         public float DaysPerStoryPoint { get; set; }
         public string FilePrefix { get; set; }
         public string JiraKey { get; set; }
+        public bool UseAnalysisPoints { get; set; } = false;
         public override string ToString()
         {
             return $"Project {{ Name = {Name}, JiraKey = {JiraKey}, DaysPerStoryPoint = {DaysPerStoryPoint}, FilePrefix = {FilePrefix} }}";
@@ -47,7 +49,6 @@ namespace Controlling
         private WorkbookPart workbookPart;
         private Worksheet worksheet;
         private Sheets sheets;
-        private Sheet sheet;
 
         public SharedStringTable SharedStringTable { get; private set; }
 
@@ -135,6 +136,7 @@ namespace Controlling
                     FilePrefix = GetCellValue(row, 1, sst),
                     JiraKey = GetCellValue(row, 2, sst),
                     DaysPerStoryPoint = float.Parse(GetCellValue(row, 3, sst)),
+                    UseAnalysisPoints = int.Parse(GetCellValue(row, 4, sst)) == 1 ? true : false,
                 };
                 projectList.Add(project);
             }
@@ -157,7 +159,8 @@ namespace Controlling
                     Name = GetCellValue(row, 2, sst),
                     StartDate = GetCellValue(row, 3, sst).ParseDate(),
                     EndDate = GetCellValue(row, 4, sst).ParseDate(),
-                    Budget = float.Parse(GetCellValue(row, 5, sst), CultureInfo.InvariantCulture)
+                    Budget = float.Parse(GetCellValue(row, 5, sst), CultureInfo.InvariantCulture),
+                    HourlyRate = int.TryParse(GetCellValue(row, 6, sst), CultureInfo.InvariantCulture, out int rate) ? rate : 0
                 };
                 contractList.Add(contract);
             }
@@ -207,7 +210,12 @@ namespace Controlling
 
         private static string GetCellValue(Row row, int cellIndex, SharedStringTable sst)
         {
-            Cell cell = row.Descendants<Cell>().ElementAt(cellIndex);
+            var descendants = row.Descendants<Cell>();
+            if (descendants.Count() <= cellIndex)
+            {
+                return null;
+            }
+            Cell cell = descendants.ElementAt(cellIndex);
 
             if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
             {

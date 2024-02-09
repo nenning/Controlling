@@ -9,6 +9,15 @@ namespace Controlling
         public string Key { get; set; }
         public string Summary { get; set; }
         public double? StoryPoints { get; set; }
+        public double? AnalysisPoints { get; set; }
+        public double TotalPoints
+        {
+            get
+            {
+                if (Project.UseAnalysisPoints) return (StoryPoints ?? 0) + (AnalysisPoints ?? 0);
+                else return StoryPoints ?? 0;
+            }
+        }
         public string Labels { get; set; }
         public string Assignee { get; set; }
         public string Reporter { get; set; }
@@ -30,11 +39,11 @@ namespace Controlling
         public double Days { get {  return Hours/8.0; } }
         public double Percent
         {
-            get { return (StoryPoints.HasValue && StoryPoints.Value > 0) ? Days / (StoryPoints.Value * Project.DaysPerStoryPoint) : 0; }
+            get { return (TotalPoints > 0.000001) ? Days / (TotalPoints * Project.DaysPerStoryPoint) : 0; }
         }
         public override string ToString()
         {
-            return $"TicketData {{ IssueType = {IssueType}, Key = {Key}, Summary = {Summary}, StoryPoints = {StoryPoints?.ToString() ?? "null"}, Status = {Status}, Sprint = {Sprint}, Days = {Days}, Percent = {Percent} }}";
+            return $"TicketData {{ IssueType = {IssueType}, Key = {Key}, Summary = {Summary}, TotalPoints = {TotalPoints}, Status = {Status}, Sprint = {Sprint}, Days = {Days}, Percent = {Percent} }}";
         }
 
     }
@@ -143,7 +152,7 @@ namespace Controlling
                                     if (!subTaskParents.ContainsKey(subTask)) subTaskParents[subTask] = rowData.Key;
                                 }
                             }
-                        }
+                        }                        
                     }
                 } catch (System.FormatException) { }
             }
@@ -157,7 +166,7 @@ namespace Controlling
         }
 
         // LGS: Issue Type	Key	Summary	Story Points	Labels	Assignee	Reporter	Priority	Status	Resolution	Created	Updated	Due date	Sprint	Epic Link	Sub-tasks	Verrechenbarkeit
-        // ISR: T	Key	Summary	Status	Resolution	Epic Link	Story Points	Assignee	Reporter	P	Created	Updated	Due	AT Points	Analysis Points	TestingPoints	Sprint	Components	Sub-Tasks
+        // ISR: T	Key	Summary	Status	Resolution	Feature Link	Story Points	Assignee	Reporter	P	Created	Updated	Due	AT Points	Analysis Points	TestingPoints	Sprint	Components	Sub-Tasks
         private static void SetPropertyValue(TicketData rowData, string columnName, string cellValue)
         {
             switch (columnName)
@@ -173,6 +182,9 @@ namespace Controlling
                     break;
                 case "Story Points":
                     rowData.StoryPoints = string.IsNullOrWhiteSpace(cellValue) ? (double?)null : double.Parse(cellValue);
+                    break;
+                case "Analysis Points":
+                    rowData.AnalysisPoints = string.IsNullOrWhiteSpace(cellValue) ? (double?)null : double.Parse(cellValue);
                     break;
                 case "Labels":
                     rowData.Labels = cellValue;
@@ -204,7 +216,7 @@ namespace Controlling
                 case "Sprint":
                     rowData.Sprint = cellValue;
                     break;
-                case "Epic Link":
+                case "Epic Link" or "Feature Link":
                     rowData.EpicLink = cellValue;
                     break;
                 case "Sub-tasks" or "Sub-Tasks":

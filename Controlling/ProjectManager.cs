@@ -71,6 +71,7 @@ namespace Controlling
                 var currentBookings = bookings.Where(x => x.Contract.Project.Name == project.Name).ToList();
                 if (project.JiraKey == "undefined")
                 {
+                    reports.ShowLateBookings(currentBookings);
                     reports.ShowCostCeiling(currentBookings);
                     continue;
                 }
