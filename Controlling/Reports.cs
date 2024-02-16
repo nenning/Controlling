@@ -52,7 +52,7 @@ namespace Controlling
                 output.WriteLine($" - {contract.Name}:");
                 foreach (var ticket in tickets.Where(t => (t.IssueType == "Story" || t.IssueType == "Task") && t.TotalPoints > 0 && t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
                 {
-                    output.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.TotalPoints * 8 * ticket.Project.DaysPerStoryPoint}h ({ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
+                    output.WriteLine($"  -- {ticket.Key} actual: {ticket.Hours:N0}h, plan: {ticket.TotalPoints * 8 * ticket.Project.DaysPerStoryPoint}h (Points: {ticket.TotalPointsText}, {ticket.Status}). {ticket.IssueType}: {ticket.Summary}");
                 }
             }
         }
