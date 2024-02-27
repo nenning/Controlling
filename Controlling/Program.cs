@@ -41,11 +41,14 @@ internal class Program
     static void TerminateOldProcesses()
     {
         if (Debugger.IsAttached) return;
-        string currentProcessName = Process.GetCurrentProcess().ProcessName;
-        Process[] processes = Process.GetProcessesByName(currentProcessName);
-        processes = processes.Where(p => p.Id != Process.GetCurrentProcess().Id)
+        var currentProcess = Process.GetCurrentProcess();
+        string currentProcessFullPath = ;
+
+        Process[] processes = Process.GetProcessesByName(currentProcess.ProcessName);
+        processes = processes.Where(p => p.Id != currentProcess.Id && p.MainModule.FileName == currentProcess.MainModule.FileName)
             .OrderBy(p => p.StartTime)
             .ToArray();
+
         foreach (Process process in processes)
         {
             try
