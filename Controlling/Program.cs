@@ -42,7 +42,6 @@ internal class Program
     {
         if (Debugger.IsAttached) return;
         var currentProcess = Process.GetCurrentProcess();
-        string currentProcessFullPath = ;
 
         Process[] processes = Process.GetProcessesByName(currentProcess.ProcessName);
         processes = processes.Where(p => p.Id != currentProcess.Id && p.MainModule.FileName == currentProcess.MainModule.FileName)
