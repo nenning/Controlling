@@ -21,6 +21,8 @@ internal class Program
             string bookingsFilePrefix = ConfigurationManager.AppSettings["App:BookingsFilePrefix"];
 
             output.WriteLine($"Starting import from {workingDirectory}...");
+            TerminateOldProcesses();
+
             Console.Title = "Waiting for OneDrive Sync...";
             ForceOneDriveSync(workingDirectory);
 
@@ -35,6 +37,29 @@ internal class Program
         }
         output.WriteLine("Press any key...");
         Console.ReadLine();
+    }
+    static void TerminateOldProcesses()
+    {
+        if (Debugger.IsAttached) return;
+        var currentProcess = Process.GetCurrentProcess();
+        string currentProcessFullPath = ;
+
+        Process[] processes = Process.GetProcessesByName(currentProcess.ProcessName);
+        processes = processes.Where(p => p.Id != currentProcess.Id && p.MainModule.FileName == currentProcess.MainModule.FileName)
+            .OrderBy(p => p.StartTime)
+            .ToArray();
+
+        foreach (Process process in processes)
+        {
+            try
+            {
+                process.Kill();
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
+        }
     }
 
     private static void ForceOneDriveSync(string folderPath)

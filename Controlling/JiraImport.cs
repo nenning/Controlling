@@ -18,6 +18,17 @@ namespace Controlling
                 else return StoryPoints ?? 0;
             }
         }
+        public string TotalPointsText
+        {
+            get
+            {
+                if (Project.UseAnalysisPoints && TotalPoints > 0.000001)
+                {
+                    return $"{TotalPoints} (SP:{StoryPoints ?? 0}, AP:{AnalysisPoints ?? 0})";
+                }
+                else return $"{StoryPoints ?? 0}";
+            }
+        }
         public string Labels { get; set; }
         public string Assignee { get; set; }
         public string Reporter { get; set; }
@@ -43,7 +54,7 @@ namespace Controlling
         }
         public override string ToString()
         {
-            return $"TicketData {{ IssueType = {IssueType}, Key = {Key}, Summary = {Summary}, TotalPoints = {TotalPoints}, Status = {Status}, Sprint = {Sprint}, Days = {Days}, Percent = {Percent} }}";
+            return $"TicketData {{ IssueType = {IssueType}, Key = {Key}, Summary = {Summary}, TotalPoints = {TotalPointsText}, Status = {Status}, Sprint = {Sprint}, Days = {Days}, Percent = {Percent} }}";
         }
 
     }
