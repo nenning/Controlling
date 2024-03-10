@@ -62,8 +62,9 @@ namespace Controlling
         {
             output.WriteLine("----------------");
             output.WriteLine("Cost Ceiling:");
+            // TODO: get rid of hardcoded values
             const double archCeiling = 400;
-            const double devCeiling = 950;
+            const double devCeiling = 1750;
             double architectureTasks = 0;
             double devTasks = 0;
             int currentMonths = 0;

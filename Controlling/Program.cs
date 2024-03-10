@@ -65,7 +65,7 @@ internal class Program
     {
         if (!Directory.Exists(folderPath))
         {
-            throw new InvalidOperationException("Folder not found {folderPath}.");
+            throw new InvalidOperationException($"Folder not found {folderPath}.");
         }
         string tempFilePath = Path.Combine(folderPath, "temp_sync_trigger.txt");
         try
