@@ -162,7 +162,7 @@ namespace Controlling
                     }
                     workHours += hours;
                 }
-                output.Write($" = Total: {workHours / 8.0:0.#}d, {workHours * contract.HourlyRate:N0} CHF (Plan: {contract.Budget / contract.HourlyRate / 8:0.#}d, {contract.Budget:N0} CHF)");
+                output.Write($" = Total: {workHours / 8.0:0.#}d, CHF {workHours * contract.HourlyRate:N0} (Plan: {contract.Budget / contract.HourlyRate / 8:0.#}d, CHF {contract.Budget:N0})");
 
                 double totalHours = 0.0;
                 double totalCost = 0.0;
@@ -175,7 +175,7 @@ namespace Controlling
                         totalCost += booking.Hours * person.HourlyRate;
                     }
                 }
-                output.WriteLine($". Blended rate per hour: CHF {totalCost / totalHours:0.#}");
+                output.WriteLine($". Total cost: CHF {totalCost:N0}. Avg cost per hour: CHF {totalCost / totalHours:0.#}");
             }
         }
 
