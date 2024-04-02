@@ -80,13 +80,13 @@ namespace Controlling
 
                 reports.ShowWarnings(currentContracts, currentBookings, currentTickets, settings.Persons);
                 reports.ShowLateBookings(currentBookings);
-                reports.ShowWrongEstimates(currentTickets, settings);
                 reports.ShowOutOfSprintBookings(currentBookings);
+                reports.ShowWrongEstimates(currentTickets, settings);
                 reports.ShowTicketsWithWorkWithoutEstimates(currentTickets);
-                reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets, settings.Persons);
+                reports.ShowBookingsPerEmployee(currentContracts, currentBookings, currentTickets, settings.Persons);
                 reports.ShowStoryEstimates(currentTickets, currentContracts);
                 reports.ShowBookingsPerTicketType(currentTickets, currentContracts);
-                reports.ShowMarginPerSprint(currentTickets, currentContracts);
+                reports.ShowMargins(currentTickets, currentContracts);
             }
         }
         private void PrintProjectTitle(Project project)

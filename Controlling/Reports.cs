@@ -113,7 +113,7 @@ namespace Controlling
         {
             return (endDate.Year - startDate.Year) * 12 + endDate.Month - startDate.Month;
         }
-        public void ShowMarginPerSprint(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
+        public void ShowMargins(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
         {
             output.WriteLine("----------------");
             output.WriteLine("Estimation margins:");
@@ -163,7 +163,7 @@ namespace Controlling
             }
         }
 
-        public void ShowBookingsByEmployeeBySprint(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
+        public void ShowBookingsPerEmployee(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
         {
             output.WriteLine("----------------");
             output.WriteLine("Overview of bookings:");
