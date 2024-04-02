@@ -85,6 +85,7 @@ namespace Controlling
                 reports.ShowTicketsWithWorkWithoutEstimates(currentTickets);
                 reports.ShowBookingsByEmployeeBySprint(currentContracts, currentBookings, currentTickets, settings.Persons);
                 reports.ShowStoryEstimates(currentTickets, currentContracts);
+                reports.ShowBookingsPerTicketType(currentTickets, currentContracts);
                 reports.ShowMarginPerSprint(currentTickets, currentContracts);
             }
         }

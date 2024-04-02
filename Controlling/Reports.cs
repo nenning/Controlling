@@ -57,7 +57,34 @@ namespace Controlling
             }
         }
 
-        
+        public void ShowBookingsPerTicketType(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
+        {
+            output.WriteLine("----------------");
+            output.WriteLine("Bookings per ticket type:");
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(50)))
+            {
+                Dictionary<string, double> ticketTypeEfforts = new();
+                foreach (var ticket in tickets.Where(t => t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
+                {
+                    double sum;
+                    ticketTypeEfforts.TryGetValue(ticket.IssueType, out sum);
+                    ticketTypeEfforts[ticket.IssueType] = sum + ticket.Hours;
+                }
+                if (ticketTypeEfforts.Keys.Count > 0)
+                {
+                    Console.Write($" - {contract.Name}: ");
+                    foreach (var pair in ticketTypeEfforts)
+                    {
+
+                        Console.Write($"[{pair.Key}: {pair.Value/8:N1}d] ");
+                    }
+                    Console.WriteLine();
+                }
+            }
+
+        }
+
+
         public void ShowCostCeiling(IEnumerable<Booking> bookings)
         {
             output.WriteLine("----------------");
@@ -83,8 +110,8 @@ namespace Controlling
                     totalMonths = GetMonthsDifference(booking.Contract.StartDate, booking.Contract.EndDate);
                 }
             }
-            output.WriteLine($" - Arch: {architectureTasks*100 / archCeiling:N0}% ({architectureTasks:N0}h of {archCeiling:N0}h)");
-            output.WriteLine($" - Dev: {devTasks*100 / devCeiling:N0}% ({devTasks:N0}h of {devCeiling:N0}h)");
+            output.WriteLine($" - Arch: {architectureTasks*100 / archCeiling:N2}% ({architectureTasks:N2}h of {archCeiling:N2}h)");
+            output.WriteLine($" - Dev: {devTasks*100 / devCeiling:N2}% ({devTasks:N2}h of {devCeiling:N2}h)");
             output.WriteLine($" - Total: {(devTasks +architectureTasks) * 100 / (devCeiling+archCeiling):N0}% ({devTasks + architectureTasks:N0}h of {devCeiling + archCeiling:N0}h)");
             output.WriteLine($" - Time: {currentMonths*100 / totalMonths:N0}% ({currentMonths:N0} of {totalMonths:N0} months)");
         }
@@ -96,8 +123,8 @@ namespace Controlling
         public void ShowMarginPerSprint(IEnumerable<TicketData> tickets, IEnumerable<Contract> contracts)
         {
             output.WriteLine("----------------");
-            output.WriteLine("Estimation margins per Sprint:");
-            foreach (var contract in contracts)
+            output.WriteLine("Estimation margins:");
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(50)))
             {
                 double plan = 0; 
                 double actual = 0;
@@ -146,7 +173,7 @@ namespace Controlling
         public void ShowBookingsByEmployeeBySprint(IEnumerable<Contract> contracts, IEnumerable<Booking> bookings, IEnumerable<TicketData> tickets, IEnumerable<Person> persons)
         {
             output.WriteLine("----------------");
-            output.WriteLine("Overview of bookings per sprint:");
+            output.WriteLine("Overview of bookings:");
             var employees = bookings.DistinctBy(a => a.Employee).Select(b => b.Employee).ToList();
             // Idea: could group by location as well and show distribution
             foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(21)))

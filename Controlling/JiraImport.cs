@@ -152,6 +152,7 @@ namespace Controlling
 
                             SetPropertyValue(rowData, columnName, cellValue);
                         }
+                        // Idea: could handle multiple sprints: "Team AIG - Sprint 30, Sofia - Sprint 36". Take latest only and only sprints in the list
                         if (!skip && rowData.IssueType.ToLowerInvariant() != "sub-task")
                         {
                             jiraDataList.Add(rowData);
