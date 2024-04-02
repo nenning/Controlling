@@ -61,27 +61,20 @@ namespace Controlling
         {
             output.WriteLine("----------------");
             output.WriteLine("Bookings per ticket type:");
-            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(50)))
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(32)))
             {
-                Dictionary<string, double> ticketTypeEfforts = new();
-                foreach (var ticket in tickets.Where(t => t.Hours > 0.0f && t.Contract?.Id == contract.Id).OrderBy(t => t.Key))
+                var ticketsByType = tickets.Where(t => t.Hours > 0.0f && t.Contract?.Id == contract.Id).GroupBy(t => t.IssueType).OrderBy(t => t.Key);
+                if (ticketsByType.Any())
                 {
-                    double sum;
-                    ticketTypeEfforts.TryGetValue(ticket.IssueType, out sum);
-                    ticketTypeEfforts[ticket.IssueType] = sum + ticket.Hours;
-                }
-                if (ticketTypeEfforts.Keys.Count > 0)
-                {
-                    Console.Write($" - {contract.Name}: ");
-                    foreach (var pair in ticketTypeEfforts)
+                    output.Write($" - {contract.Name}: ");
+                    foreach (var group in ticketsByType)
                     {
-
-                        Console.Write($"[{pair.Key}: {pair.Value/8:N1}d] ");
+                        double totalDays = group.Sum(t => t.Hours) / 8;
+                        output.Write($"[{group.Key}: {totalDays:N1}d] ");
                     }
-                    Console.WriteLine();
+                    output.WriteLine();
                 }
             }
-
         }
 
 
@@ -124,7 +117,7 @@ namespace Controlling
         {
             output.WriteLine("----------------");
             output.WriteLine("Estimation margins:");
-            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(50)))
+            foreach (var contract in contracts.Where(c => !c.EndDate.IsMoreDaysAgoThan(32)))
             {
                 double plan = 0; 
                 double actual = 0;
